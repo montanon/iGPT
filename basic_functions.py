@@ -5,11 +5,18 @@ import re
 import fitz
 
 from tqdm import tqdm
+from langchain import OpenAI, PromptTemplate, LLMChain
 from langchain.text_splitter import CharacterTextSplitter
+from langchain.chains.mapreduce import MapReduceChain
+from langchain.prompts import PromptTemplate
+from langchain.chains.summarize import load_summarize_chain
+from langchain.callbacks import get_openai_callback
 
 
 with open('.env', 'r') as f:
     KEY = f.read().split('=')[-1].replace('\n', '')
+    os.environ["OPEN_API_KEY"] = KEY
+
 openai.api_key = KEY
 
 
@@ -38,7 +45,7 @@ def split_string_at_space(text, max_chars):
 def load_counter(file_path='token_usage'):
     if os.path.exists(file_path):
         with open(file_path, 'r') as file:
-            counter = int(file.read().strip())
+            counter = float(file.read().strip())
     else:
         counter = 0
     return counter
@@ -63,54 +70,47 @@ def select_pdf_file(folder_path):
     return None
 
 
-def extract_pdf_text(pdf_file_path):
+def extract_pdf_text(pdf_file_path, max_tokens=3750):
+
+    text_splitter = CharacterTextSplitter.from_tiktoken_encoder(chunk_size=max_tokens, chunk_overlap=0)
 
     doc = fitz.open(pdf_file_path)
-
-    paragraphs = []
-    for page in doc:
-        blocks = page.get_text('blocks')
-        paragraph = ' '.join([bl[-3] for bl in blocks])
-        paragraphs.append(paragraph)
-
-    return paragraphs
-
-
-def summarize_pdf_text(paragraphs, pre_prompt, max_tokens=4097, tokens_response=200):
-
-    output_text = ''
-#
-    #adjusted_paragraphs = []
-    #for paragraph in paragraphs:
-    #    while len(paragraph) / 3 > max_tokens - tokens_response - 3750:
-    #        max_chars = int(3 * (max_tokens - tokens_response - 3750))
-    #        shortened_paragraph, paragraph = split_string_at_space(paragraph, max_chars)
-    #        adjusted_paragraphs.append(shortened_paragraph)
-    #    adjusted_paragraphs.append(paragraph)
-
-    adjusted_paragraphs = process_strings(paragraphs, max_tokens - tokens_response - 1000)
+    text = '\n'.join(
+        [' '.join(
+            [bl[-3] for bl in page.get_text('blocks') if bl[-3].find('<image') == -1]
+            ) for page in doc])
     
-    with open(pre_prompt, 'r') as f:
-        prompt = f.read()
+    texts = text_splitter.create_documents([text])
 
-    for paragraph in tqdm(adjusted_paragraphs):
+    return texts
 
-        prompt = f"{prompt}\n{paragraph}"
-        
-        response = openai.Completion.create(
-            engine="text-davinci-003",#"gpt-3.5-turbo"
-            prompt=prompt,
-            max_tokens=tokens_response,
-            n=1,
-            stop=None,
-            temperature=0.15,
-        )
 
-        increment_counter(response["usage"]["total_tokens"])
+def summarize_pdf_text(texts, pre_prompt=None, max_tokens=4097, tokens_response=200):
 
-        output_text += response.choices[0].text.strip() + "\n\n"
+    if isinstance(texts, str):
+        text_splitter = CharacterTextSplitter.from_tiktoken_encoder(chunk_size=max_tokens, chunk_overlap=0)
+        texts = text_splitter.create_documents([texts])
 
-    return output_text.strip()
+    llm = OpenAI(temperature=0, openai_api_key=KEY)
+
+    if pre_prompt is not None:
+        with open(pre_prompt, 'r') as f:
+            prompt = f.read()
+
+        PROMPT = PromptTemplate(template=prompt, input_variables=["text"])
+        chain = load_summarize_chain(llm, chain_type="map_reduce", map_prompt=PROMPT, combine_prompt=PROMPT, return_intermediate_steps=True)
+    else:
+        chain = load_summarize_chain(llm, chain_type="map_reduce", return_intermediate_steps=True)
+
+    with get_openai_callback() as cb:
+        output_text = chain({"input_documents": texts}, return_only_outputs=True)
+        increment_counter(cb.total_tokens)
+        increment_counter(cb.total_cost, file_path='total_cost')
+
+    paragraphs_summary = '\n'.join(output_text['intermediate_steps'])
+    document_summary = output_text['output_text']
+
+    return paragraphs_summary, document_summary, cb.total_cost
 
 
 def classify_pdf_text(summary):
@@ -162,5 +162,13 @@ def main():
     print(f"Classified PDF content:\n{classification}")
 
 
+def get_summary(pdf_path):
+    texts = extract_pdf_text(pdf_path, max_tokens=3750)
+    summary = summarize_pdf_text(texts, pre_prompt='pre-prompt_summary.txt', max_tokens=4097, tokens_response=200)
+    return summary
+
+
 if __name__ == "__main__":
-    main()
+    #main()
+    pdf_path = '/Users/sebastian/Desktop/TODAI/Yoshida-sensei/References/kajikawa2009.pdf'
+    summary = get_summary(pdf_path)

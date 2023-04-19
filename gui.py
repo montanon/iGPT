@@ -74,14 +74,21 @@ def main():
                                     selected_file.replace('.pdf', '.txt'))
   
         if not os.path.exists(summary_path):
-            summary = summarize_pdf_text(paragraphs, 'pre-prompt_summary.txt')
+            paragraphs_summary, doc_summary, summ_cost = summarize_pdf_text(paragraphs, pre_prompt='pre-prompt_summary.txt')
             with open(summary_path, 'w') as f:
-                f.write(summary)
+                f.write(doc_summary)
+            with open(summary_path.replace('.txt', '_intermediate.txt'), 'w') as f:
+                f.write(paragraphs_summary)
         else:
             with open(summary_path, 'r') as f:
-                summary = f.read()
+                doc_summary = f.read()
+            with open(summary_path.replace('.txt', '_intermediate.txt'), 'r') as f:
+                paragraphs_summary = f.read()
 
-        gpt_response.insert(tk.END, 'SUMMARY:\n' + summary + '\n\n')
+        gpt_response.delete(1.0, tk.END)  # Clear previous GPT response
+
+        gpt_response.insert(tk.END, 'PARAGRAPHS SUMMARY:\n' + paragraphs_summary + '\n\n' + '='*20)
+        gpt_response.insert(tk.END, 'DOCUMENT SUMMARY:\n' + doc_summary + '\n\n'+ '='*20)
         gpt_response.see(tk.END) 
 
         keywords_folder = os.path.join(folder_path, 'keywords')
@@ -91,14 +98,19 @@ def main():
                                     selected_file.replace('.pdf', '.txt'))
   
         if not os.path.exists(keywords_path):
-            keywords = summarize_pdf_text(paragraphs, 'pre-prompt_keywords.txt')
+            paragraphs_keywords, doc_keywords, kw_cost = summarize_pdf_text(paragraphs, pre_prompt='pre-prompt_keywords.txt')
             with open(keywords_path, 'w') as f:
-                f.write(keywords)
+                f.write(doc_keywords)
+            with open(keywords_path.replace('.txt', '_intermediate.txt'), 'w') as f:
+                f.write(paragraphs_keywords)
         else:
             with open(keywords_path, 'r') as f:
-                keywords = f.read()
+                doc_keywords = f.read()
+            with open(keywords_path.replace('.txt', '_intermediate.txt'), 'r') as f:
+                paragraphs_keywords = f.read()
 
-        gpt_response.insert(tk.END, 'KEYWORDS:\n' + keywords + '\n\n')
+        #gpt_response.insert(tk.END, 'PARAGRAPHS KEYWORDS:\n' + paragraphs_keywords + '\n\n')
+        gpt_response.insert(tk.END, 'DOCUMENT KEYWORDS:\n' + doc_keywords + '\n\n' + '='*20)
         gpt_response.see(tk.END) 
 
         classification_folder = os.path.join(folder_path, 'classifications')
@@ -107,17 +119,20 @@ def main():
         classification_path = os.path.join(classification_folder,
                                     selected_file.replace('.pdf', '.txt'))
         if not os.path.exists(classification_path):
-            classification = classify_pdf_text(summary)
+            paragraphs_classification, doc_classification, topic_cost = summarize_pdf_text(paragraphs, pre_prompt='pre-prompt_classification.txt')
             with open(classification_path, 'w') as f:
-                f.write(classification)
+                f.write(doc_classification)
+            with open(classification_path.replace('.txt', '_intermediate.txt'), 'w') as f:
+                f.write(paragraphs_classification)
         else:
             with open(classification_path, 'r') as f:
-                classification = f.read()
+                doc_classification = f.read()
+            with open(classification_path.replace('.txt', '_intermediate.txt'), 'r') as f:
+                paragraphs_classification = f.read()
 
-        gpt_response.delete(1.0, tk.END)  # Clear previous GPT response
-        
-
-        gpt_response.insert(tk.END, "TOPIC:\n" + classification + '\n\n')
+        gpt_response.insert(tk.END, "TOPIC:\n" + doc_classification + '\n\n')
+        gpt_response.insert(tk.END, "TOTAL COST OF ANALYSIS: $" + str(summ_cost + kw_cost + topic_cost) + '\n\n')
+        gpt_response.insert(tk.END, f"INDIVIDUAL COSTS: SUMMARY:${summ_cost}, KEYWORDS:${kw_cost}, TOPIC:${topic_cost}\n\n")
         gpt_response.see(tk.END)  # Scroll to the end of the GPT response text
         gpt_response.update_idletasks()  # Update the GUI to display the new text
 
