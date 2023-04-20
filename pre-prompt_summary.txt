@@ -1,1 +1,3 @@
-Summarize this paragraph:
+"""Summarize this paragraph:
+
+{text}"""

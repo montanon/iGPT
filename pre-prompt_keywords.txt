@@ -1,1 +1,3 @@
-Identify the relevant keywords of this paragraph:
+"""Which are the relevant keywords of this paragraph?:
+
+{text}"""
