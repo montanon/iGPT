@@ -31,8 +31,9 @@ def load_last_folder_path():
     return folder_path
 
 
-def main():
+def main(window_height=800):
     root = tk.Tk()
+    root.geometry(f"1350x{window_height}")
     root.title("PDF Selector")
 
     # Folder path input
@@ -42,14 +43,17 @@ def main():
     last_folder_path = load_last_folder_path()
     folder_path_entry = tk.Entry(root, width=50)
     folder_path_entry.insert(0, last_folder_path)
-    folder_path_entry.grid(row=1, column=0, padx=10, pady=(5, 0))
+    folder_path_entry.grid(row=1, column=0, padx=3, pady=(0, 0), sticky='W')
 
+    # Configure row weights
+    root.grid_rowconfigure(1, weight=1)
+    root.grid_rowconfigure(3, weight=5)
     # Listbox to display available files
     file_listbox_label = tk.Label(root, text="Available PDF files:")
     file_listbox_label.grid(row=2, column=0, sticky="W", padx=10, pady=(10, 0))
 
-    file_listbox = tk.Listbox(root, width=50, height=10, exportselection=False)
-    file_listbox.grid(row=3, column=0, padx=10, pady=(5, 0))
+    file_listbox = tk.Listbox(root, width=65, height=10, exportselection=False)  # Updated width
+    file_listbox.grid(row=3, column=0, padx=10, pady=(5, 0), sticky="nsew")
 
     # Button to display files in the folder
     display_files_button = tk.Button(
@@ -57,7 +61,7 @@ def main():
         text="Display Files",
         command=lambda: display_files(folder_path_entry.get(), file_listbox),
     )
-    display_files_button.grid(row=1, column=1, padx=(0, 10), pady=(5, 0))
+    display_files_button.grid(row=1, column=0, padx=(0, 10), pady=(0, 0), sticky="e")  # Updated sticky option
 
     # Button to select the chosen PDF file
     def select_pdf(folder_path_entry, file_listbox, gpt_response):
@@ -84,6 +88,7 @@ def main():
                 doc_summary = f.read()
             with open(summary_path.replace('.txt', '_intermediate.txt'), 'r') as f:
                 paragraphs_summary = f.read()
+            summ_cost = None
 
         gpt_response.delete(1.0, tk.END)  # Clear previous GPT response
 
@@ -108,6 +113,7 @@ def main():
                 doc_keywords = f.read()
             with open(keywords_path.replace('.txt', '_intermediate.txt'), 'r') as f:
                 paragraphs_keywords = f.read()
+            kw_cost = None
 
         #gpt_response.insert(tk.END, 'PARAGRAPHS KEYWORDS:\n' + paragraphs_keywords + '\n\n')
         gpt_response.insert(tk.END, 'DOCUMENT KEYWORDS:\n' + doc_keywords + '\n\n' + '='*20)
@@ -129,22 +135,27 @@ def main():
                 doc_classification = f.read()
             with open(classification_path.replace('.txt', '_intermediate.txt'), 'r') as f:
                 paragraphs_classification = f.read()
+            topic_cost = None
 
         gpt_response.insert(tk.END, "TOPIC:\n" + doc_classification + '\n\n')
-        gpt_response.insert(tk.END, "TOTAL COST OF ANALYSIS: $" + str(summ_cost + kw_cost + topic_cost) + '\n\n')
+        total_cost = 0
+        for cost in [summ_cost, kw_cost, topic_cost]:
+            if cost is not None:
+                total_cost += cost
+        gpt_response.insert(tk.END, f"TOTAL COST OF ANALYSIS: ${total_cost}\n\n")
         gpt_response.insert(tk.END, f"INDIVIDUAL COSTS: SUMMARY:${summ_cost}, KEYWORDS:${kw_cost}, TOPIC:${topic_cost}\n\n")
         gpt_response.see(tk.END)  # Scroll to the end of the GPT response text
         gpt_response.update_idletasks()  # Update the GUI to display the new text
 
     select_pdf_button = tk.Button(root, text="Select PDF", command=lambda: select_pdf(folder_path_entry, file_listbox, gpt_response))
-    select_pdf_button.grid(row=3, column=1, padx=(0, 10), pady=(5, 0))
+    select_pdf_button.grid(row=4, column=0, padx=10, pady=(5, 0), sticky="ne")  # Updated row, padx, and sticky option
 
     # Text widget to display GPT-4 response
     gpt_response_label = tk.Label(root, text="GPT-4 Response:")
-    gpt_response_label.grid(row=4, column=0, sticky="W", padx=10, pady=(10, 0))
+    gpt_response_label.grid(row=0, column=2, sticky="W", padx=10, pady=(10, 0))
 
     gpt_response = tk.Text(root, width=100, height=20, wrap=tk.WORD)
-    gpt_response.grid(row=5, column=0, columnspan=2, padx=10, pady=(5, 10))
+    gpt_response.grid(row=1, column=2, rowspan=4, padx=10, pady=(5, 10), sticky="nsew")
 
     display_files(last_folder_path, file_listbox)
 
