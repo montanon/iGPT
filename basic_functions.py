@@ -70,7 +70,7 @@ def select_pdf_file(folder_path):
     return None
 
 
-def extract_pdf_text(pdf_file_path, max_tokens=3750):
+def extract_pdf_text(pdf_file_path, max_tokens=2500):
 
     text_splitter = CharacterTextSplitter.from_tiktoken_encoder(chunk_size=max_tokens, chunk_overlap=0)
 
@@ -85,7 +85,7 @@ def extract_pdf_text(pdf_file_path, max_tokens=3750):
     return texts
 
 
-def summarize_pdf_text(texts, pre_prompt=None, max_tokens=4097, tokens_response=200):
+def summarize_pdf_text(texts, pre_prompt=None, max_tokens=3500, tokens_response=200):
 
     if isinstance(texts, str):
         text_splitter = CharacterTextSplitter.from_tiktoken_encoder(chunk_size=max_tokens, chunk_overlap=0)

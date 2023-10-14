@@ -11,7 +11,9 @@ def display_files(folder_path, file_listbox):
     file_listbox.delete(0, tk.END)
     if not folder_path:
         return
-    for file in os.listdir(folder_path):
+    file_list = os.listdir(folder_path)
+    file_list.sort()
+    for file in file_list:
         if file.endswith(".pdf"):
             file_listbox.insert(tk.END, file)
     save_last_folder_path(folder_path)
