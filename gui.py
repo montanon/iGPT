@@ -1,7 +1,6 @@
 import os
-import tkinter as tk
 import pickle
-
+import tkinter as tk
 from tkinter import filedialog, ttk
 
 from basic_functions import *
@@ -54,7 +53,8 @@ def main(window_height=800):
     file_listbox_label = tk.Label(root, text="Available PDF files:")
     file_listbox_label.grid(row=2, column=0, sticky="W", padx=10, pady=(10, 0))
 
-    file_listbox = tk.Listbox(root, width=65, height=10, exportselection=False)  # Updated width
+    file_listbox = tk.Listbox(
+        root, width=65, height=10, exportselection=False)  # Updated width
     file_listbox.grid(row=3, column=0, padx=10, pady=(5, 0), sticky="nsew")
 
     # Button to display files in the folder
@@ -63,7 +63,8 @@ def main(window_height=800):
         text="Display Files",
         command=lambda: display_files(folder_path_entry.get(), file_listbox),
     )
-    display_files_button.grid(row=1, column=0, padx=(0, 10), pady=(0, 0), sticky="e")  # Updated sticky option
+    display_files_button.grid(row=1, column=0, padx=(
+        0, 10), pady=(0, 0), sticky="e")  # Updated sticky option
 
     # Button to select the chosen PDF file
     def select_pdf(folder_path_entry, file_listbox, gpt_response):
@@ -78,9 +79,10 @@ def main(window_height=800):
             os.mkdir(summary_folder)
         summary_path = os.path.join(summary_folder,
                                     selected_file.replace('.pdf', '.txt'))
-  
+
         if not os.path.exists(summary_path):
-            paragraphs_summary, doc_summary, summ_cost = summarize_pdf_text(paragraphs, pre_prompt='pre-prompt_summary.txt')
+            paragraphs_summary, doc_summary, summ_cost = summarize_pdf_text(
+                paragraphs, pre_prompt='pre-prompt_summary.txt')
             with open(summary_path, 'w') as f:
                 f.write(doc_summary)
             with open(summary_path.replace('.txt', '_intermediate.txt'), 'w') as f:
@@ -94,18 +96,21 @@ def main(window_height=800):
 
         gpt_response.delete(1.0, tk.END)  # Clear previous GPT response
 
-        gpt_response.insert(tk.END, 'PARAGRAPHS SUMMARY:\n' + paragraphs_summary + '\n\n' + '='*20)
-        gpt_response.insert(tk.END, 'DOCUMENT SUMMARY:\n' + doc_summary + '\n\n'+ '='*20)
-        gpt_response.see(tk.END) 
+        gpt_response.insert(tk.END, 'PARAGRAPHS SUMMARY:\n' +
+                            paragraphs_summary + '\n\n' + '='*20)
+        gpt_response.insert(tk.END, 'DOCUMENT SUMMARY:\n' +
+                            doc_summary + '\n\n' + '='*20)
+        gpt_response.see(tk.END)
 
         keywords_folder = os.path.join(folder_path, 'keywords')
         if not os.path.exists(keywords_folder):
             os.mkdir(keywords_folder)
         keywords_path = os.path.join(keywords_folder,
-                                    selected_file.replace('.pdf', '.txt'))
-  
+                                     selected_file.replace('.pdf', '.txt'))
+
         if not os.path.exists(keywords_path):
-            paragraphs_keywords, doc_keywords, kw_cost = summarize_pdf_text(paragraphs, pre_prompt='pre-prompt_keywords.txt')
+            paragraphs_keywords, doc_keywords, kw_cost = summarize_pdf_text(
+                paragraphs, pre_prompt='pre-prompt_keywords.txt')
             with open(keywords_path, 'w') as f:
                 f.write(doc_keywords)
             with open(keywords_path.replace('.txt', '_intermediate.txt'), 'w') as f:
@@ -117,17 +122,19 @@ def main(window_height=800):
                 paragraphs_keywords = f.read()
             kw_cost = None
 
-        #gpt_response.insert(tk.END, 'PARAGRAPHS KEYWORDS:\n' + paragraphs_keywords + '\n\n')
-        gpt_response.insert(tk.END, 'DOCUMENT KEYWORDS:\n' + doc_keywords + '\n\n' + '='*20)
-        gpt_response.see(tk.END) 
+        # gpt_response.insert(tk.END, 'PARAGRAPHS KEYWORDS:\n' + paragraphs_keywords + '\n\n')
+        gpt_response.insert(tk.END, 'DOCUMENT KEYWORDS:\n' +
+                            doc_keywords + '\n\n' + '='*20)
+        gpt_response.see(tk.END)
 
         classification_folder = os.path.join(folder_path, 'classifications')
         if not os.path.exists(classification_folder):
             os.mkdir(classification_folder)
         classification_path = os.path.join(classification_folder,
-                                    selected_file.replace('.pdf', '.txt'))
+                                           selected_file.replace('.pdf', '.txt'))
         if not os.path.exists(classification_path):
-            paragraphs_classification, doc_classification, topic_cost = summarize_pdf_text(paragraphs, pre_prompt='pre-prompt_classification.txt')
+            paragraphs_classification, doc_classification, topic_cost = summarize_pdf_text(
+                paragraphs, pre_prompt='pre-prompt_classification.txt')
             with open(classification_path, 'w') as f:
                 f.write(doc_classification)
             with open(classification_path.replace('.txt', '_intermediate.txt'), 'w') as f:
@@ -144,20 +151,25 @@ def main(window_height=800):
         for cost in [summ_cost, kw_cost, topic_cost]:
             if cost is not None:
                 total_cost += cost
-        gpt_response.insert(tk.END, f"TOTAL COST OF ANALYSIS: ${total_cost}\n\n")
-        gpt_response.insert(tk.END, f"INDIVIDUAL COSTS: SUMMARY:${summ_cost}, KEYWORDS:${kw_cost}, TOPIC:${topic_cost}\n\n")
+        gpt_response.insert(
+            tk.END, f"TOTAL COST OF ANALYSIS: ${total_cost}\n\n")
+        gpt_response.insert(tk.END, f"INDIVIDUAL COSTS: SUMMARY:${
+                            summ_cost}, KEYWORDS:${kw_cost}, TOPIC:${topic_cost}\n\n")
         gpt_response.see(tk.END)  # Scroll to the end of the GPT response text
         gpt_response.update_idletasks()  # Update the GUI to display the new text
 
-    select_pdf_button = tk.Button(root, text="Select PDF", command=lambda: select_pdf(folder_path_entry, file_listbox, gpt_response))
-    select_pdf_button.grid(row=4, column=0, padx=10, pady=(5, 0), sticky="ne")  # Updated row, padx, and sticky option
+    select_pdf_button = tk.Button(root, text="Select PDF", command=lambda: select_pdf(
+        folder_path_entry, file_listbox, gpt_response))
+    select_pdf_button.grid(row=4, column=0, padx=10, pady=(
+        5, 0), sticky="ne")  # Updated row, padx, and sticky option
 
     # Text widget to display GPT-4 response
     gpt_response_label = tk.Label(root, text="GPT-4 Response:")
     gpt_response_label.grid(row=0, column=2, sticky="W", padx=10, pady=(10, 0))
 
     gpt_response = tk.Text(root, width=100, height=20, wrap=tk.WORD)
-    gpt_response.grid(row=1, column=2, rowspan=4, padx=10, pady=(5, 10), sticky="nsew")
+    gpt_response.grid(row=1, column=2, rowspan=4, padx=10,
+                      pady=(5, 10), sticky="nsew")
 
     display_files(last_folder_path, file_listbox)
 

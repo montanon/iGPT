@@ -1,11 +1,8 @@
+import fitz
 import pandas as pd
 import pdfquery
-import fitz
 
-pdf_path = '/Users/sebastian/Desktop/TODAI/Yoshida-sensei/References/kajikawa2009.pdf'
-
-import fitz
-import pandas as pd 
+pdf_path = 'sample_pdf.pdf'
 
 doc = fitz.open(pdf_path)
 
